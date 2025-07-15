@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Chi tiết sự kiện</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    body { background: #f0f2f5; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+    .container { max-width: 600px; margin: 40px auto; background: #fff; border-radius: 10px; box-shadow: 0 4px 24px rgba(0,0,0,0.08); padding: 32px; }
+    h2 { text-align: center; color: #333; margin-bottom: 30px; }
+    .event-detail { font-size: 17px; color: #333; }
+    .label { font-weight: bold; color: #007bff; }
+    .back-btn { display: inline-block; margin-top: 24px; padding: 8px 18px; background: #007bff; color: #fff; border: none; border-radius: 5px; font-size: 15px; cursor: pointer; text-decoration: none; transition: background 0.2s; }
+    .back-btn:hover { background: #0056b3; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2><%= event.name %></h2>
+    <div class="event-detail">
+      <div><span class="label">Ngày:</span> <%= new Date(event.date).toLocaleString('vi-VN') %></div>
+      <div><span class="label">Địa điểm:</span> <%= event.location %></div>
+      <div><span class="label">Sức chứa:</span> <%= event.capacity %></div>
+      <div><span class="label">Mô tả:</span> <%= event.description %></div>
+    </div>
+    <a href="/events/list" class="back-btn">Quay lại danh sách</a>
+    <button id="register-btn" class="back-btn" style="margin-left: 16px; background: #28a745; display:none;">Đăng ký sự kiện</button>
+    <button id="unregister-btn" class="back-btn" style="margin-left: 16px; background: #dc3545; display:none;">Hủy đăng ký</button>
+    <div id="register-message" style="margin-top:16px;text-align:center;"></div>
+  </div>
+  <script>
+    const eventId = '<%= event._id %>';
+    const token = localStorage.getItem('token');
+    const registerBtn = document.getElementById('register-btn');
+    const unregisterBtn = document.getElementById('unregister-btn');
+    const messageDiv = document.getElementById('register-message');
+    let registrationId = null;
+
+    async function checkRegistration() {
+      if (!token) {
+        registerBtn.style.display = 'inline-block';
+        unregisterBtn.style.display = 'none';
+        messageDiv.innerText = 'Bạn cần đăng nhập để đăng ký sự kiện!';
+        messageDiv.style.color = '#d8000c';
+        return;
+      }
+      try {
+        const res = await fetch(`/registrations/check?eventId=${eventId}`, {
+          headers: { 'Authorization': 'Bearer ' + token }
+        });
+        const data = await res.json();
+        if (res.ok && data.status === 'success' && data.registered) {
+          registrationId = data.registrationId;
+          registerBtn.style.display = 'none';
+          unregisterBtn.style.display = 'inline-block';
+          messageDiv.innerText = 'Bạn đã đăng ký sự kiện này.';
+          messageDiv.style.color = '#28a745';
+        } else {
+          registerBtn.style.display = 'inline-block';
+          unregisterBtn.style.display = 'none';
+          messageDiv.innerText = '';
+        }
+      } catch (err) {
+        registerBtn.style.display = 'inline-block';
+        unregisterBtn.style.display = 'none';
+        messageDiv.innerText = 'Không kiểm tra được trạng thái đăng ký!';
+        messageDiv.style.color = '#d8000c';
+      }
+    }
+
+    registerBtn.onclick = async function() {
+      if (!token) {
+        messageDiv.innerText = 'Bạn cần đăng nhập để đăng ký sự kiện!';
+        messageDiv.style.color = '#d8000c';
+        return;
+      }
+      try {
+        const res = await fetch('/registrations', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer ' + token
+          },
+          body: JSON.stringify({ eventId })
+        });
+        const data = await res.json();
+        if (res.ok && data.status === 'success') {
+          messageDiv.innerText = 'Đăng ký thành công!';
+          messageDiv.style.color = '#28a745';
+          await checkRegistration();
+        } else {
+          messageDiv.innerText = data.message || 'Đăng ký thất bại!';
+          messageDiv.style.color = '#d8000c';
+        }
+      } catch (err) {
+        messageDiv.innerText = 'Lỗi kết nối máy chủ!';
+        messageDiv.style.color = '#d8000c';
+      }
+    }
+
+    unregisterBtn.onclick = async function() {
+      if (!token || !registrationId) return;
+      try {
+        const res = await fetch(`/registrations/${registrationId}`, {
+          method: 'DELETE',
+          headers: { 'Authorization': 'Bearer ' + token }
+        });
+        const data = await res.json();
+        if (res.ok && data.status === 'success') {
+          messageDiv.innerText = 'Đã hủy đăng ký sự kiện.';
+          messageDiv.style.color = '#dc3545';
+          await checkRegistration();
+        } else {
+          messageDiv.innerText = data.message || 'Hủy đăng ký thất bại!';
+          messageDiv.style.color = '#d8000c';
+        }
+      } catch (err) {
+        messageDiv.innerText = 'Lỗi kết nối máy chủ!';
+        messageDiv.style.color = '#d8000c';
+      }
+    }
+
+    checkRegistration();
+  </script>
+</body>
+</html> 

@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Event Registrations</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    body { background: #f0f2f5; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+    .container { max-width: 800px; margin: 40px auto; background: #fff; border-radius: 10px; box-shadow: 0 4px 24px rgba(0,0,0,0.08); padding: 32px; }
+    h2 { text-align: center; color: #333; margin-bottom: 30px; }
+    table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
+    th, td { padding: 12px 8px; border-bottom: 1px solid #eee; text-align: left; }
+    th { background: #f7f7f7; color: #007bff; }
+    .pagination { text-align: center; margin-top: 20px; }
+    .pagination a { display: inline-block; margin: 0 5px; padding: 6px 14px; background: #007bff; color: #fff; border-radius: 4px; text-decoration: none; }
+    .pagination a.active, .pagination a:hover { background: #0056b3; }
+    .no-data { text-align: center; color: #d8000c; font-size: 18px; margin-top: 30px; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2>Event Registrations</h2>
+    <% if (registrations && registrations.length > 0) { %>
+      <table>
+        <thead>
+          <tr>
+            <th>Registration ID</th>
+            <th>Student ID</th>
+            <th>Registration Date</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% registrations.forEach(function(reg) { %>
+            <tr>
+              <td><%= reg._id %></td>
+              <td><%= reg.studentId %></td>
+              <td><%= new Date(reg.registrationDate).toLocaleString('vi-VN') %></td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+      <div class="pagination">
+        <% for (let i = 1; i <= pages; i++) { %>
+          <a href="/registrations/list?page=<%= i %>" class="<%= i === page ? 'active' : '' %>"><%= i %></a>
+        <% } %>
+      </div>
+    <% } else { %>
+      <div class="no-data">No students have registered yet</div>
+    <% } %>
+  </div>
+</body>
+</html> 

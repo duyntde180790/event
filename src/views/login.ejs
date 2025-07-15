@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Đăng nhập</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    body {
+      background: #f0f2f5;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+    .login-container {
+      max-width: 400px;
+      margin: 80px auto;
+      background: #fff;
+      border-radius: 10px;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.08);
+      padding: 32px 28px 24px 28px;
+    }
+    .login-container h2 {
+      text-align: center;
+      margin-bottom: 24px;
+      color: #333;
+    }
+    .form-group {
+      margin-bottom: 18px;
+    }
+    label {
+      display: block;
+      margin-bottom: 6px;
+      color: #555;
+    }
+    input[type="text"], input[type="password"] {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+      font-size: 15px;
+      background: #fafbfc;
+      transition: border 0.2s;
+    }
+    input[type="text"]:focus, input[type="password"]:focus {
+      border: 1.5px solid #007bff;
+      outline: none;
+    }
+    .error {
+      color: #d8000c;
+      background: #ffd2d2;
+      padding: 10px;
+      border-radius: 4px;
+      margin-bottom: 15px;
+      text-align: center;
+    }
+    button {
+      width: 100%;
+      padding: 10px;
+      background: #007bff;
+      color: #fff;
+      border: none;
+      border-radius: 5px;
+      font-size: 16px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    button:hover {
+      background: #0056b3;
+    }
+  </style>
+</head>
+<body>
+  <div class="login-container">
+    <h2>Đăng nhập</h2>
+    <% if (error) { %>
+      <div class="error"><%= error %></div>
+    <% } %>
+    <form id="login-form" action="/auth/login" method="POST">
+      <div class="form-group">
+        <label for="username">Tên đăng nhập</label>
+        <input type="text" id="username" name="username" required autocomplete="username">
+      </div>
+      <div class="form-group">
+        <label for="password">Mật khẩu</label>
+        <input type="password" id="password" name="password" required autocomplete="current-password">
+      </div>
+      <button type="submit">Đăng nhập</button>
+    </form>
+  </div>
+  <script>
+    const loginForm = document.getElementById('login-form');
+    if (loginForm) {
+      loginForm.addEventListener('submit', async function(e) {
+        e.preventDefault();
+        const username = document.getElementById('username').value;
+        const password = document.getElementById('password').value;
+        const errorDiv = document.querySelector('.error');
+        if (errorDiv) errorDiv.innerText = '';
+        try {
+          const res = await fetch('/auth/login', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ username, password })
+          });
+          const data = await res.json();
+          if (res.ok && data.status === 'success') {
+            localStorage.setItem('token', data.data.token);
+            // Lưu token vào cookie (7 ngày)
+            document.cookie = `token=${data.data.token}; path=/; max-age=${7*24*60*60}`;
+            // Chuyển hướng theo role
+            if (data.data.user.role === 'admin') {
+              window.location.href = '/registrations/list';
+            } else {
+              window.location.href = '/events/list';
+            }
+          } else {
+            if (errorDiv) {
+              errorDiv.innerText = data.message || 'Đăng nhập thất bại!';
+            } else {
+              alert(data.message || 'Đăng nhập thất bại!');
+            }
+          }
+        } catch (err) {
+          if (errorDiv) {
+            errorDiv.innerText = 'Lỗi kết nối máy chủ!';
+          } else {
+            alert('Lỗi kết nối máy chủ!');
+          }
+        }
+      });
+    }
+  </script>
+</body>
+</html>
